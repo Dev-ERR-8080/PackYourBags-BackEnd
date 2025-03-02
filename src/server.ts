@@ -7,7 +7,7 @@ import  placeRouter  from './routers/place.router';
 import userRouter from './routers/user.router';
 import { dbconncet } from './configs/database.config';
 dbconncet();
-
+console.log("MONGO_URI:", process.env.MONGO_URI);
 
 const app = express();
 app.use(express.json());
