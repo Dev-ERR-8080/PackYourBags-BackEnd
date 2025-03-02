@@ -63,7 +63,7 @@ const generateTokenResponse = (user:any) => {
         email: user.email,
         isAdmin: user.isAdmin
     }, "SomeRandomText", {
-        expiresIn: "30d"  // Corrected property name from exipresIn to expiresIn
+        expiresIn: "30d"  
     });
     user.token = token;
     return user;

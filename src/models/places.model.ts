@@ -11,7 +11,7 @@ export interface Places{
     duration:string;
     content:string[];
     lats:number[];
-    lngs:number[];
+    lngs:number [];
 } 
 
 export const PlacesSchema= new Schema<Places>(
