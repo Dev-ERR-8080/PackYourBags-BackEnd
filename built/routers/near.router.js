@@ -39,44 +39,66 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var express_1 = require("express");
 var express_async_handler_1 = __importDefault(require("express-async-handler"));
-var complaint_model_1 = require("../models/complaint.model");
-var http_status_1 = require("../constant/http_status");
+var express_1 = require("express");
+var places_model_1 = require("../models/places.model");
 var router = (0, express_1.Router)();
-// Endpoint for saving contact messages
-router.post('/contact', (0, express_async_handler_1.default)(function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var _a, name, email, message, newMessage, error_1;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
+router.get("/test", (0, express_async_handler_1.default)(function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        res.json({ message: "Hello World" }); // ✅ No return statement needed
+        return [2 /*return*/];
+    });
+}); }));
+// 📍 Find Nearest Travel Destination within Budget & Filters
+router.get("/near", (0, express_async_handler_1.default)(function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    var lat, lon, budget, category, minRating, query, nearestPlace, error_1;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
             case 0:
-                _a = req.body, name = _a.name, email = _a.email, message = _a.message;
-                // Validate input data
-                if (!name || !email || !message) {
-                    res.status(http_status_1.HTTP_BAD_REQUEST).send('Missing required fields');
+                _a.trys.push([0, 2, , 3]);
+                lat = parseFloat(String(req.query.lat));
+                lon = parseFloat(String(req.query.lon));
+                budget = parseInt(String(req.query.budget));
+                category = req.query.category ? String(req.query.category) : undefined;
+                minRating = req.query.minRating ? parseFloat(String(req.query.minRating)) : undefined;
+                if (isNaN(lat) || isNaN(lon) || isNaN(budget)) {
+                    res.status(400).json({ error: "Invalid or missing lat, lon, or budget" });
                     return [2 /*return*/];
                 }
-                newMessage = new complaint_model_1.ContactMessageModel({
-                    name: name,
-                    email: email,
-                    message: message
-                });
-                _b.label = 1;
+                query = {
+                    $or: [
+                        { "price_range.budget": { $lte: budget } },
+                        { "price_range.standard": { $lte: budget } },
+                        { "price_range.luxury": { $lte: budget } }
+                    ],
+                    location: {
+                        $near: {
+                            $geometry: { type: "Point", coordinates: [lon, lat] },
+                            $maxDistance: 500000, // 500 km max range
+                        },
+                    }
+                };
+                if (category) {
+                    query.category = category;
+                }
+                if (minRating !== undefined) {
+                    query["ratings.average"] = { $gte: minRating };
+                }
+                return [4 /*yield*/, places_model_1.PlacesModel.find(query).sort({ "ratings.average": -1 }).limit(1)];
             case 1:
-                _b.trys.push([1, 3, , 4]);
-                // Save the message to the database
-                return [4 /*yield*/, newMessage.save()];
+                nearestPlace = _a.sent();
+                if (!nearestPlace.length) {
+                    res.status(404).json({ message: "No suitable destination found within budget." });
+                    return [2 /*return*/];
+                }
+                res.json(nearestPlace[0]);
+                return [3 /*break*/, 3];
             case 2:
-                // Save the message to the database
-                _b.sent();
-                res.status(201).send('Message saved successfully');
-                return [3 /*break*/, 4];
-            case 3:
-                error_1 = _b.sent();
-                console.error('Error saving message:', error_1);
-                res.status(500).send('Internal server error');
-                return [3 /*break*/, 4];
-            case 4: return [2 /*return*/];
+                error_1 = _a.sent();
+                console.error(error_1);
+                res.status(500).json({ error: "Internal server error" });
+                return [3 /*break*/, 3];
+            case 3: return [2 /*return*/];
         }
     });
 }); }));

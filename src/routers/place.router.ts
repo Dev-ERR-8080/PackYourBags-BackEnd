@@ -1,3 +1,4 @@
+console.log("✅ places.router.ts is being executed!");
 
 import { Router } from 'express';
 import { Sample_Plces } from "../data";
@@ -24,7 +25,8 @@ router.get("/",expressAsyncHandler(
     const places=await PlacesModel.find();
     res.send(places);
   }
-))
+));
+
 
 router.get("/search/:searchTerm", expressAsyncHandler(
   async (req, res) => {

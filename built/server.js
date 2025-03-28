@@ -9,9 +9,11 @@ var express_1 = __importDefault(require("express"));
 var cors_1 = __importDefault(require("cors"));
 var place_router_1 = __importDefault(require("./routers/place.router"));
 var user_router_1 = __importDefault(require("./routers/user.router"));
+var near_router_1 = __importDefault(require("./routers/near.router"));
 var database_config_1 = require("./configs/database.config");
 (0, database_config_1.dbconncet)();
 console.log("MONGO_URI:", process.env.MONGO_URI);
+console.log("nearRouter loaded:", near_router_1.default);
 var app = (0, express_1.default)();
 app.use(express_1.default.json());
 app.use((0, cors_1.default)({
@@ -20,6 +22,15 @@ app.use((0, cors_1.default)({
 }));
 app.use("/api/places", place_router_1.default);
 app.use("/api/users", user_router_1.default);
+app.use("/api/nearest", near_router_1.default);
+app._router.stack.forEach(function (layer) {
+    if (layer.route) {
+        console.log(layer.route.path);
+    }
+});
+app.get("/test", function (req, res) {
+    res.send("Test route working!");
+});
 var port = 5000;
 app.listen(port, function () {
     console.log("Website served on http://localhost:" + port);
