@@ -1,5 +1,3 @@
-console.log("✅ places.router.ts is being executed!");
-
 import { Router } from 'express';
 import { Sample_Plces } from "../data";
 import expressAsyncHandler from 'express-async-handler';

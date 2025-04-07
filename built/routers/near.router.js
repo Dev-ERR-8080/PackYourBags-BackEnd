@@ -9,8 +9,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -43,52 +43,51 @@ var express_async_handler_1 = __importDefault(require("express-async-handler"));
 var express_1 = require("express");
 var places_model_1 = require("../models/places.model");
 var router = (0, express_1.Router)();
-router.get("/test", (0, express_async_handler_1.default)(function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    return __generator(this, function (_a) {
-        res.json({ message: "Hello World" }); // ✅ No return statement needed
-        return [2 /*return*/];
-    });
-}); }));
 // 📍 Find Nearest Travel Destination within Budget & Filters
 router.get("/near", (0, express_async_handler_1.default)(function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var lat, lon, budget, category, minRating, query, nearestPlace, error_1;
+    var lat, lon, budgetParam, budget, category, minRating, query, nearestPlace, error_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 _a.trys.push([0, 2, , 3]);
                 lat = parseFloat(String(req.query.lat));
                 lon = parseFloat(String(req.query.lon));
-                budget = parseInt(String(req.query.budget));
+                budgetParam = parseInt(String(req.query.budget));
+                budget = budgetParam !== undefined && !isNaN(Number(budgetParam)) ? parseInt(String(budgetParam)) : null;
                 category = req.query.category ? String(req.query.category) : undefined;
                 minRating = req.query.minRating ? parseFloat(String(req.query.minRating)) : undefined;
-                if (isNaN(lat) || isNaN(lon) || isNaN(budget)) {
-                    res.status(400).json({ error: "Invalid or missing lat, lon, or budget" });
+                // || isNaN(budget)
+                if (isNaN(lat) || isNaN(lon)) {
+                    res.status(400).json({ error: "Invalid or missing Lat, Lon." });
                     return [2 /*return*/];
                 }
                 query = {
-                    $or: [
-                        { "price_range.budget": { $lte: budget } },
-                        { "price_range.standard": { $lte: budget } },
-                        { "price_range.luxury": { $lte: budget } }
-                    ],
                     location: {
                         $near: {
                             $geometry: { type: "Point", coordinates: [lon, lat] },
-                            $maxDistance: 500000, // 500 km max range
+                            $maxDistance: 2000000, // 2000 km max range
                         },
                     }
                 };
+                if (budget != null) {
+                    query.$or = [
+                        { "price_range.budget": { $lte: budget } },
+                        { "price_range.standard": { $lte: budget } },
+                        { "price_range.luxury": { $lte: budget } }
+                    ];
+                }
                 if (category) {
                     query.category = category;
                 }
                 if (minRating !== undefined) {
                     query["ratings.average"] = { $gte: minRating };
                 }
-                return [4 /*yield*/, places_model_1.PlacesModel.find(query).sort({ "ratings.average": -1 }).limit(1)];
+                console.log("Final Query:", JSON.stringify(query, null, 2));
+                return [4 /*yield*/, places_model_1.PlacesModel.find(query).sort({ "ratings.average": -1 }).limit(3)];
             case 1:
                 nearestPlace = _a.sent();
                 if (!nearestPlace.length) {
-                    res.status(404).json({ message: "No suitable destination found within budget." });
+                    res.status(404).json({ message: "No suitable destination found within Budget." });
                     return [2 /*return*/];
                 }
                 res.json(nearestPlace[0]);
